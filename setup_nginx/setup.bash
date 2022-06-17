@@ -14,12 +14,13 @@ while getopts i:h:p:d:g: flag; do
     p) port=${OPTARG} ;;
     g) git=${OPTARG} ;;
     d) dir_project=${OPTARG} ;;
+    t) type_source=${OPTARG} ;;
     *) ;;
     esac
 done
 
-if [ "$port" -eq 80 ]; then
-    port=443
+if [ "$port" -eq 443 ]; then
+    port=80
 fi
 if [ "$is_install" -eq 1 ]; then
     sudo apt -y update
@@ -32,6 +33,10 @@ if [ -z "$dir_project" ]; then
     dir_project="$domain"
 else
     dir_project="/var/www/$dir_project"
+fi
+
+if [ "$type_source" == "laravel" ]; then
+    dir_project="$dir_project/public"
 fi
 
 if [ -n "$git" ]; then
@@ -48,7 +53,7 @@ if [ -n "$domain" ]; then
 
         # allow upload file with size upto 500MB
         client_max_body_size 500M;
-        root $dir_project
+        root $dir_project;
         index index.php index.html index.htm;
         server_name $domain www.$domain;
 
@@ -64,6 +69,8 @@ if [ -n "$domain" ]; then
     else
         echo "failed add file"
     fi
+    nginx -t
+    systemctl reload nginx
 
 else
     echo "not_found_domain_name"
