@@ -1,4 +1,4 @@
-#master_server 
+# master_server 
 
 edit my.cnf 
 
@@ -30,7 +30,7 @@ mysql :
     UNLOCK TABLES;
     QUIT;
 
-#slave_server 
+# slave_server 
 
 mysql:
 
