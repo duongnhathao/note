@@ -95,7 +95,7 @@ if [ -n "$domain" ]; then
     fi
     nginx -t
     systemctl reload nginx
-
+    php artisan cms:user:create # add user 
 else
     echo "not_found_domain_name"
 fi
