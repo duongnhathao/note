@@ -45,7 +45,7 @@ my.conf:
     sudo service mysql restart
 
 mysql: 
-
+    //setup account connect to master server 
     CHANGE MASTER TO MASTER_HOST='master_server',MASTER_USER='slave_user', MASTER_PASSWORD='slavepass', MASTER_LOG_FILE='(from SHOW MASTER STATUS)', MASTER_LOG_POS=(from SHOW MASTER STATUS); 
     
     START SLAVE;
