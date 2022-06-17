@@ -7,7 +7,7 @@ fi
 is_install=0
 port=80
 
-while getopts i:h:p:d:g: flag; do
+while getopts i:h:p:d:g:t: flag; do
     case "${flag}" in
     i) is_install=${OPTARG} ;;
     h) domain=${OPTARG} ;;
@@ -35,13 +35,19 @@ else
     dir_project="/var/www/$dir_project"
 fi
 
-if [ "$type_source" == "laravel" ]; then
-    dir_project="$dir_project/public"
+if [ -n "$git" ]; then
+    git clone --quiet "$git" "$dir_project" || exit 1
+    cd "$dir_project" || (echo "not_found_dir" && exit)
+    mkdir vendor
+    composer install
+    cp .env.example .env
+    chown -R www-data:www-data "$dir_project"
+    chmod -R 755 "$dir_project"
+    echo "clone into $dir_project"
 fi
 
-if [ -n "$git" ]; then
-    git clone --quiet "$git" "$dir_project"
-    echo "clone into $dir_project"
+if [ "$type_source" == "laravel" ]; then
+    dir_project="$dir_project/public"
 fi
 
 if [ -n "$domain" ]; then
@@ -57,9 +63,27 @@ if [ -n "$domain" ]; then
         index index.php index.html index.htm;
         server_name $domain www.$domain;
 
-        location / {
-            try_files \$uri \$uri/ =404;
-        }
+        charset utf-8;
+
+            location / {
+                try_files \$uri \$uri/ /index.php?\$query_string;
+            }
+
+            location = /favicon.ico { access_log off; log_not_found off; }
+            location = /robots.txt  { access_log off; log_not_found off; }
+
+            error_page 404 /index.php;
+
+            location ~ \.php$ {
+                fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+                fastcgi_index index.php;
+                fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
+                include fastcgi_params;
+            }
+
+            location ~ /\.(?!well-known).* {
+                deny all;
+            }
     }"
     echo "$domain_file_content" >>"/etc/nginx/sites-available/$domain"
     cp "/etc/nginx/sites-available/$domain" "/etc/nginx/sites-enabled/"
